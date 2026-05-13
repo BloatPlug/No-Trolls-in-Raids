@@ -11,9 +11,7 @@ import net.runelite.client.plugins.PluginDescriptor;
 import javax.inject.Inject;
 
 @PluginDescriptor(
-        name = "No Trolls In Raids",
-        description = "Automatically turns names red when a player from your ignore list appears in your ToB or ToA party.",
-        tags = {"tob", "toa", "raid", "ignore"}
+        name = "No Trolls In Raids"
 )
 public class NoTrollsInRaidsPlugin extends Plugin
 {
