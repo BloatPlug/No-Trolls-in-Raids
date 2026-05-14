@@ -1,100 +1,108 @@
 package com.NoTrollsInParty;
 
-import com.google.inject.Provides;
 import net.runelite.api.Client;
 import net.runelite.api.Ignore;
+import net.runelite.api.GameState;
 import net.runelite.api.events.GameTick;
 import net.runelite.api.widgets.Widget;
+import net.runelite.api.widgets.WidgetInfo;
 import net.runelite.client.eventbus.Subscribe;
 import net.runelite.client.plugins.Plugin;
 import net.runelite.client.plugins.PluginDescriptor;
 import javax.inject.Inject;
 
 @PluginDescriptor(
-        name = "No Trolls In Raids"
+        name = "No Trolls In Raids",
+        description = "Highlights ignored players in red on raid/party interfaces",
+        tags = {"raid", "ignore", "tob", "cox", "party"}
 )
 public class NoTrollsInRaidsPlugin extends Plugin
 {
     @Inject
     private Client client;
 
+    private static final int[] TARGET_GROUPS = {28, 50, 161, 162, 364, 772, 773, 774};
+
     @Subscribe
     public void onGameTick(GameTick event)
     {
-        if (client.getIgnoreContainer() == null) return;
-
-        int[] groups = {28, 50, 161, 162, 364, 772, 773, 774};
-
-        for (int groupId : groups)
+        if (client.getGameState() != GameState.LOGGED_IN || client.getIgnoreContainer() == null)
         {
-            for (int i = 0; i < 5; i++)
+            return;
+        }
+
+        for (int groupId : TARGET_GROUPS)
+        {
+
+            Widget root = client.getWidget(groupId, 0);
+
+            if (root != null && !root.isHidden())
             {
-                Widget root = client.getWidget(groupId, i);
-                if (root != null && !root.isHidden())
-                {
-                    processWidgetTree(root);
-                }
+                scanAndColor(root);
             }
         }
     }
 
-    private void processWidgetTree(Widget w)
+    private void scanAndColor(Widget widget)
     {
-        if (w == null || w.isHidden()) return;
+        if (widget == null || widget.isHidden())
+        {
+            return;
+        }
 
-        String text = w.getText();
+        String text = widget.getText();
         if (text != null && !text.isEmpty() && !text.equals("-"))
         {
             String newText = injectColorTags(text);
+
             if (!newText.equals(text))
             {
-                w.setText(newText);
+                widget.setText(newText);
             }
         }
 
-        Widget[] children;
-        if ((children = w.getStaticChildren()) != null)
+        Widget[] staticChildren = widget.getStaticChildren();
+        if (staticChildren != null)
         {
-            for (Widget c : children) processWidgetTree(c);
+            for (Widget child : staticChildren) scanAndColor(child);
         }
 
-        if ((children = w.getDynamicChildren()) != null)
+        Widget[] dynamicChildren = widget.getDynamicChildren();
+        if (dynamicChildren != null)
         {
-            for (Widget c : children) processWidgetTree(c);
+            for (Widget child : dynamicChildren) scanAndColor(child);
         }
 
-        if ((children = w.getNestedChildren()) != null)
+        Widget[] nestedChildren = widget.getNestedChildren();
+        if (nestedChildren != null)
         {
-            for (Widget c : children) processWidgetTree(c);
+            for (Widget child : nestedChildren) scanAndColor(child);
         }
     }
 
     private String injectColorTags(String text)
     {
         String result = text;
+        if (result.contains("<col=ff0000>"))
+        {
+            return result;
+        }
+
         for (Ignore ignoreEntry : client.getIgnoreContainer().getMembers())
         {
-            if (ignoreEntry != null && ignoreEntry.getName() != null)
+            if (ignoreEntry == null || ignoreEntry.getName() == null) continue;
+
+            String ignoredName = ignoreEntry.getName().replace("\u00A0", " ").trim();
+            if (ignoredName.isEmpty()) continue;
+
+            if (result.toLowerCase().contains(ignoredName.toLowerCase()))
             {
-                String ignoredName = ignoreEntry.getName().replace("\u00A0", " ").trim();
-                if (!ignoredName.isEmpty())
-                {
-                    result = colorize(result, ignoredName);
-                }
+                result = result.replaceAll(
+                        "(?i)" + java.util.regex.Pattern.quote(ignoredName),
+                        "<col=ff0000>$0</col>"
+                );
             }
         }
         return result;
-    }
-
-    private String colorize(String fullText, String name)
-    {
-        if (fullText.toLowerCase().contains(name.toLowerCase()) && !fullText.contains("<col=ff0000>"))
-        {
-            return fullText.replaceAll(
-                    "(?i)" + java.util.regex.Pattern.quote(name),
-                    "<col=ff0000>$0</col>"
-            );
-        }
-        return fullText;
     }
 }
