@@ -1,8 +1,8 @@
 # No Trolls In Raids
 
-RuneLite plugin that highlights players from your OSRS Ignore List inside ToB and ToA party boards.
+RuneLite plugin that highlights player names from your OSRS Ignore List inside ToB and ToA party boards.
 
-Ignored players are automatically turned red so you can quickly spot trolls, griefers, or players you want to avoid before joining a raid.
+Ignored players names are automatically turned red so you can quickly spot trolls, griefers, or players you want to avoid before joining a raid.
 
 ## Features
 
@@ -19,4 +19,4 @@ Ignored players are automatically turned red so you can quickly spot trolls, gri
 
 ## Author
 
-BloatPlug
+BloatPlug / Contact me on discord: BadGrandpA#3342
